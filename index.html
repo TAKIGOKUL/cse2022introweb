@@ -56,6 +56,19 @@
                 <line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>
             </svg>
         );
+        // --- NEW: Eye icons for carousel toggle ---
+        const Eye = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        );
+        const EyeOff = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+        );
 
         // --- Reusable Button Component ---
         const Button = ({ children, className, ...props }) => (
@@ -66,23 +79,23 @@
 
         // --- Main Application Component ---
         function WelcomePage() {
-            // --- UPDATED: Volume is now enabled by default ---
             const [muted, setMuted] = useState(false);
-            const [needsUserGesture, setNeedsUserGesture] = useState(true); // Assume user gesture is needed initially for sound
+            const [needsUserGesture, setNeedsUserGesture] = useState(true);
             const videoRef = useRef(null);
             const [currentSlide, setCurrentSlide] = useState(0);
             const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+            // --- NEW: State for carousel visibility ---
+            const [isCarouselVisible, setIsCarouselVisible] = useState(true);
             
-            const carouselImages = Array.from({ length: 7 }, (_, i) => `img${i + 1}.jpg`);
-            
-            // --- UPDATED: Video playlist now includes 7 videos ---
+            const carouselImages = Array.from({ length: 10 }, (_, i) => `img${i + 1}.jpg`);
             const videoPlaylist = Array.from({ length: 7 }, (_, i) => `vid${i + 1}.mp4`);
 
             // --- Carousel Logic ---
             useEffect(() => {
+                if (!isCarouselVisible) return; // Pause carousel if hidden
                 const interval = setInterval(() => setCurrentSlide((prev) => (prev + 1) % carouselImages.length), 4000);
                 return () => clearInterval(interval);
-            }, [carouselImages.length]);
+            }, [carouselImages.length, isCarouselVisible]);
 
             // --- Star Trail Logic ---
             useEffect(() => {
@@ -120,13 +133,10 @@
                 const videoElement = videoRef.current;
                 if (videoElement) {
                     videoElement.load();
-                    // Attempt to play with sound. If it fails, the catch block will handle it.
                     videoElement.play().then(() => {
-                        // If playback succeeds with sound, we don't need the user gesture button.
                         setNeedsUserGesture(false);
                     }).catch((error) => {
                         console.log("Autoplay with sound was prevented. Awaiting user interaction.", error);
-                        // If it fails, ensure video is muted and show the gesture button.
                         videoElement.muted = true;
                         setMuted(true);
                         setNeedsUserGesture(true);
@@ -155,7 +165,6 @@
                     const isNowMuted = !v.muted; 
                     v.muted = isNowMuted; 
                     setMuted(isNowMuted); 
-                    // If we are unmuting and still need a gesture, trigger the gesture handler
                     if (!isNowMuted && needsUserGesture) {
                         handleUserGesture();
                     }
@@ -183,20 +192,25 @@
                         <p className="text-lg md:text-xl max-w-4xl mx-auto mb-12 text-gray-100 drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]">
                             Step into the future at <span className="text-[#c0a062] font-bold">College of Engineering Adoor</span> — where innovation meets excellence.
                         </p>
-                        <div className="relative w-full max-w-2xl mx-auto mb-12">
-                            <div className="relative aspect-video rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(192,160,98,0.4)] border-2 border-[#c0a062]/30 backdrop-blur-sm">
-                                {carouselImages.map((src, index) => (
-                                    <div key={index} className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}>
-                                        <img src={src} alt={`Campus Scene ${index + 1}`} className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        
+                        {/* --- NEW: Conditional rendering for the carousel --- */}
+                        {isCarouselVisible && (
+                            <div className="relative w-full max-w-2xl mx-auto mb-12">
+                                <div className="relative aspect-video rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(192,160,98,0.4)] border-2 border-[#c0a062]/30 backdrop-blur-sm">
+                                    {carouselImages.map((src, index) => (
+                                        <div key={index} className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}>
+                                            <img src={src} alt={`Campus Scene ${index + 1}`} className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                        </div>
+                                    ))}
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                                        {carouselImages.map((_, index) => (<button key={index} onClick={() => setCurrentSlide(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-[#c0a062] shadow-[0_0_10px_rgba(192,160,98,0.8)]' : 'bg-white/50 hover:bg-white/70'}`} aria-label={`Go to slide ${index + 1}`} />))}
                                     </div>
-                                ))}
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-                                    {carouselImages.map((_, index) => (<button key={index} onClick={() => setCurrentSlide(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-[#c0a062] shadow-[0_0_10px_rgba(192,160,98,0.8)]' : 'bg-white/50 hover:bg-white/70'}`} aria-label={`Go to slide ${index + 1}`} />))}
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-8">
+                        )}
+
+                        <div className="flex flex-wrap justify-center gap-4 items-center mb-8">
                             <a href="https://www.instagram.com/ce_yeahh/" target="_blank" rel="noopener noreferrer" className="transform transition-transform duration-300 hover:scale-105">
                                 <Button className="flex items-center gap-3 bg-gradient-to-r from-[#c0a062] to-yellow-500 hover:from-yellow-500 hover:to-[#c0a062] text-black font-bold px-8 py-4 rounded-full shadow-[0_0_25px_rgba(192,160,98,0.4)] hover:shadow-[0_0_35px_rgba(192,160,98,0.6)] transition-shadow duration-300">
                                     <Instagram className="w-6 h-6" /> Follow Us
@@ -204,6 +218,10 @@
                             </a>
                             <Button onClick={toggleMute} className="flex items-center gap-3 bg-black/50 hover:bg-black/80 text-white font-bold px-8 py-4 rounded-full shadow-[0_0_25px_rgba(0,0,0,0.4)] hover:shadow-[0_0_35px_rgba(192,160,98,0.3)] transition-all duration-300 border border-white/20 backdrop-blur-md">
                                 {muted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />} {muted ? "Unmute" : "Mute"}
+                            </Button>
+                            {/* --- NEW: Carousel toggle button --- */}
+                            <Button onClick={() => setIsCarouselVisible(!isCarouselVisible)} className="flex items-center gap-3 bg-black/50 hover:bg-black/80 text-white font-bold px-8 py-4 rounded-full shadow-[0_0_25px_rgba(0,0,0,0.4)] hover:shadow-[0_0_35px_rgba(192,160,98,0.3)] transition-all duration-300 border border-white/20 backdrop-blur-md">
+                                {isCarouselVisible ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />} {isCarouselVisible ? "Hide Images" : "Show Images"}
                             </Button>
                         </div>
                         {needsUserGesture && (
