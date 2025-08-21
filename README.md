@@ -4,7 +4,7 @@ A visually rich, animated welcome page for the incoming junior batch at the Coll
 
 ## Live Demo
 
-[**View the live demo here!**](https://your-demo-link-goes-here.com)
+[**View the live demo here!**](https://takigokul.github.io/cse2022introweb/)
 
 ## Features
 
