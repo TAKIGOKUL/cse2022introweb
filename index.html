@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to CEA | 2025</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React Libraries -->
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel to transpile JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Global styles and animations */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body class="bg-black">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- SVG Icons ---
+        const Instagram = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+            </svg>
+        );
+        const Volume2 = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+        );
+        const VolumeX = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+        );
+
+        // --- Reusable Button Component ---
+        const Button = ({ children, className, ...props }) => (
+            <button className={`transition-transform active:scale-95 font-semibold ${className}`} {...props}>
+                {children}
+            </button>
+        );
+
+        // --- Main Application Component ---
+        function WelcomePage() {
+            // --- UPDATED: Volume is now enabled by default ---
+            const [muted, setMuted] = useState(false);
+            const [needsUserGesture, setNeedsUserGesture] = useState(true); // Assume user gesture is needed initially for sound
+            const videoRef = useRef(null);
+            const [currentSlide, setCurrentSlide] = useState(0);
+            const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+            
+            const carouselImages = Array.from({ length: 7 }, (_, i) => `img${i + 1}.jpg`);
+            
+            // --- UPDATED: Video playlist now includes 7 videos ---
+            const videoPlaylist = Array.from({ length: 7 }, (_, i) => `vid${i + 1}.mp4`);
+
+            // --- Carousel Logic ---
+            useEffect(() => {
+                const interval = setInterval(() => setCurrentSlide((prev) => (prev + 1) % carouselImages.length), 4000);
+                return () => clearInterval(interval);
+            }, [carouselImages.length]);
+
+            // --- Star Trail Logic ---
+            useEffect(() => {
+                const canvas = document.getElementById("trailCanvas");
+                if (!canvas) return;
+                const ctx = canvas.getContext("2d");
+                let stars = [];
+                const resizeCanvas = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+                resizeCanvas();
+                window.addEventListener("resize", resizeCanvas);
+                const addStar = (x, y) => stars.push({ x, y, alpha: 1, r: Math.random() * 2 + 1, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5 });
+                let animationFrameId;
+                const animate = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    stars.forEach((star, i) => {
+                        ctx.shadowBlur = 8; ctx.shadowColor = "#c0a062"; ctx.fillStyle = `rgba(192,160,98,${star.alpha})`; ctx.beginPath(); ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2); ctx.fill();
+                        ctx.shadowBlur = 0; ctx.fillStyle = `rgba(255,255,255,${star.alpha * 0.8})`; ctx.beginPath(); ctx.arc(star.x, star.y, star.r * 0.4, 0, Math.PI * 2); ctx.fill();
+                        star.x += star.vx; star.y += star.vy; star.alpha -= 0.008; star.r *= 0.998;
+                        if (star.alpha <= 0 || star.r <= 0.1) stars.splice(i, 1);
+                    });
+                    animationFrameId = requestAnimationFrame(animate);
+                };
+                animate();
+                const onMouseMove = (e) => addStar(e.clientX, e.clientY);
+                const onTouchMove = (e) => { e.preventDefault(); for (let i = 0; i < e.touches.length; i++) addStar(e.touches[i].clientX, e.touches[i].clientY); };
+                window.addEventListener("mousemove", onMouseMove);
+                window.addEventListener("touchmove", onTouchMove, { passive: false });
+                return () => { cancelAnimationFrame(animationFrameId); window.removeEventListener("mousemove", onMouseMove); window.removeEventListener("touchmove", onTouchMove); window.removeEventListener("resize", resizeCanvas); };
+            }, []);
+            
+            // --- Video Player Logic ---
+            const handleVideoEnd = () => setCurrentVideoIndex((prev) => (prev + 1) % videoPlaylist.length);
+            
+            useEffect(() => {
+                const videoElement = videoRef.current;
+                if (videoElement) {
+                    videoElement.load();
+                    // Attempt to play with sound. If it fails, the catch block will handle it.
+                    videoElement.play().then(() => {
+                        // If playback succeeds with sound, we don't need the user gesture button.
+                        setNeedsUserGesture(false);
+                    }).catch((error) => {
+                        console.log("Autoplay with sound was prevented. Awaiting user interaction.", error);
+                        // If it fails, ensure video is muted and show the gesture button.
+                        videoElement.muted = true;
+                        setMuted(true);
+                        setNeedsUserGesture(true);
+                        videoElement.play().catch(e => console.error("Autoplay with mute also failed:", e));
+                    });
+                }
+            }, [currentVideoIndex]);
+
+            const handleUserGesture = async () => {
+                const v = videoRef.current;
+                if (v) {
+                    try { 
+                        v.muted = false; 
+                        await v.play(); 
+                        setMuted(false); 
+                        setNeedsUserGesture(false); 
+                    } catch (e) { 
+                        console.error("Failed to play video after user gesture:", e); 
+                    }
+                }
+            };
+
+            const toggleMute = () => {
+                const v = videoRef.current;
+                if(v) { 
+                    const isNowMuted = !v.muted; 
+                    v.muted = isNowMuted; 
+                    setMuted(isNowMuted); 
+                    // If we are unmuting and still need a gesture, trigger the gesture handler
+                    if (!isNowMuted && needsUserGesture) {
+                        handleUserGesture();
+                    }
+                }
+            };
+
+            return (
+                <div className="relative min-h-screen w-full overflow-hidden bg-black">
+                    {/* Backgrounds and Overlays */}
+                    <div className="absolute inset-0">
+                        <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" autoPlay muted={muted} playsInline preload="metadata" onEnded={handleVideoEnd} src={videoPlaylist[currentVideoIndex]} />
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(45deg, #1a1a1a, #c0a062, #1a1a1a)', backgroundSize: '400% 400%', animation: 'gradientShift 8s ease infinite', opacity: 0.5 }} />
+                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `radial-gradient(circle at 25% 25%, #c0a062 2px, transparent 2px), radial-gradient(circle at 75% 75%, #c0a062 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
+                    </div>
+                    <canvas id="trailCanvas" className="absolute inset-0 w-full h-full pointer-events-none z-20" />
+                    
+                    {/* Main Content */}
+                    <main className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center text-white px-4 py-8">
+                        <div className="mb-8">
+                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-4">
+                                <span className="bg-gradient-to-r from-white via-[#c0a062] to-white bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(192,160,98,0.5)] animate-pulse">WELCOME</span>
+                            </h1>
+                            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-[#c0a062] drop-shadow-[0_0_20px_rgba(192,160,98,0.3)]">JUNIORS • 2025</h2>
+                        </div>
+                        <p className="text-lg md:text-xl max-w-4xl mx-auto mb-12 text-gray-100 drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]">
+                            Step into the future at <span className="text-[#c0a062] font-bold">College of Engineering Adoor</span> — where innovation meets excellence.
+                        </p>
+                        <div className="relative w-full max-w-2xl mx-auto mb-12">
+                            <div className="relative aspect-video rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(192,160,98,0.4)] border-2 border-[#c0a062]/30 backdrop-blur-sm">
+                                {carouselImages.map((src, index) => (
+                                    <div key={index} className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}>
+                                        <img src={src} alt={`Campus Scene ${index + 1}`} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                    </div>
+                                ))}
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                                    {carouselImages.map((_, index) => (<button key={index} onClick={() => setCurrentSlide(index)} className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-[#c0a062] shadow-[0_0_10px_rgba(192,160,98,0.8)]' : 'bg-white/50 hover:bg-white/70'}`} aria-label={`Go to slide ${index + 1}`} />))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-8">
+                            <a href="https://www.instagram.com/ce_yeahh/" target="_blank" rel="noopener noreferrer" className="transform transition-transform duration-300 hover:scale-105">
+                                <Button className="flex items-center gap-3 bg-gradient-to-r from-[#c0a062] to-yellow-500 hover:from-yellow-500 hover:to-[#c0a062] text-black font-bold px-8 py-4 rounded-full shadow-[0_0_25px_rgba(192,160,98,0.4)] hover:shadow-[0_0_35px_rgba(192,160,98,0.6)] transition-shadow duration-300">
+                                    <Instagram className="w-6 h-6" /> Follow Us
+                                </Button>
+                            </a>
+                            <Button onClick={toggleMute} className="flex items-center gap-3 bg-black/50 hover:bg-black/80 text-white font-bold px-8 py-4 rounded-full shadow-[0_0_25px_rgba(0,0,0,0.4)] hover:shadow-[0_0_35px_rgba(192,160,98,0.3)] transition-all duration-300 border border-white/20 backdrop-blur-md">
+                                {muted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />} {muted ? "Unmute" : "Mute"}
+                            </Button>
+                        </div>
+                        {needsUserGesture && (
+                            <div className="animate-bounce"><Button onClick={handleUserGesture} className="bg-gradient-to-r from-[#c0a062] to-yellow-500 text-black font-bold px-8 py-4 rounded-full shadow-[0_0_30px_rgba(192,160,98,0.6)] hover:shadow-[0_0_40px_rgba(192,160,98,0.8)] transition-shadow duration-300">🎵 Tap to Enable Sound</Button></div>
+                        )}
+                        <p className="text-sm text-gray-400 mt-8 max-w-md mx-auto">💡 Move your cursor or finger to create a trail of stars!</p>
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<WelcomePage />, document.getElementById('root'));
+    </script>
+</body>
+</html>
